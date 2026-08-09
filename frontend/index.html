@@ -671,16 +671,107 @@ function getDemoResponse(question, studentClass){
   ];
 }
 
-function handleSend(){
+// Convert the AI's markdown-ish text response into the block format our streamer understands.
+function markdownToBlocks(markdown){
+  const blocks = [];
+  const lines = markdown.split('\n');
+  let listBuffer = [];
+
+  function flushList(){
+    if(listBuffer.length){
+      blocks.push({type:'ul', items: listBuffer});
+      listBuffer = [];
+    }
+  }
+  function inline(text){
+    return text
+      .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+      .replace(/\\\[|\\\]/g, '')
+      .replace(/\\text\{(.+?)\}/g, '$1');
+  }
+
+  let paragraphBuffer = [];
+  function flushParagraph(){
+    if(paragraphBuffer.length){
+      const text = inline(paragraphBuffer.join(' ').trim());
+      if(text) blocks.push({type:'p', text});
+      paragraphBuffer = [];
+    }
+  }
+
+  for(const rawLine of lines){
+    const line = rawLine.trim();
+    if(line === ''){ flushParagraph(); flushList(); continue; }
+    if(line.startsWith('###') || line.startsWith('##') || line.startsWith('#')){
+      flushParagraph(); flushList();
+      blocks.push({type:'h3', text: inline(line.replace(/^#+\s*/, ''))});
+      continue;
+    }
+    if(/^[-*•]\s+/.test(line) || /^\d+[\.\)]\s+/.test(line)){
+      flushParagraph();
+      listBuffer.push(inline(line.replace(/^[-*•]\s+/, '').replace(/^\d+[\.\)]\s+/, '')));
+      continue;
+    }
+    if(line === '---'){ flushParagraph(); flushList(); continue; }
+    paragraphBuffer.push(line);
+  }
+  flushParagraph();
+  flushList();
+  return blocks;
+}
+
+const WORKER_URL = 'https://sohopathi-worker.diablostore.workers.dev';
+
+async function askBackend(question, studentClass){
+  const res = await fetch(WORKER_URL, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ question, studentClass })
+  });
+  if(!res.ok){
+    throw new Error('Server error: ' + res.status);
+  }
+  const data = await res.json();
+  return data.answer;
+}
+
+function addLoadingMessage(){
+  const wrap = document.createElement('div');
+  wrap.className='msg-ai';
+  wrap.id='loading-msg';
+  wrap.innerHTML = `
+    <div class="msg-ai-inner">
+      <div class="ai-avatar">স</div>
+      <div class="ai-content" style="color:var(--ink-soft);">ভাবছি...</div>
+    </div>`;
+  messages.appendChild(wrap);
+  messages.scrollTop = messages.scrollHeight;
+}
+function removeLoadingMessage(){
+  const el = document.getElementById('loading-msg');
+  if(el) el.remove();
+}
+
+async function handleSend(){
   const text = input.value.trim();
   if(!text) return;
   const selectedClass = classSelect.value;
   addUserMessage(text);
   input.value='';
   autoGrow();
-  setTimeout(()=>{
-    addAiMessageStreaming(getDemoResponse(text, selectedClass));
-  }, 350);
+  sendBtn.disabled = true;
+  addLoadingMessage();
+
+  try{
+    const answerText = await askBackend(text, selectedClass);
+    removeLoadingMessage();
+    addAiMessageStreaming(markdownToBlocks(answerText));
+  } catch(err){
+    removeLoadingMessage();
+    addAiMessageStreaming([{type:'p', text: 'দুঃখিত, একটি সমস্যা হয়েছে। আবার চেষ্টা করো। (' + err.message + ')'}]);
+  } finally {
+    sendBtn.disabled = false;
+  }
 }
 </script>
 

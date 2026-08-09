@@ -1,0 +1,20 @@
+Chapter 3: Acids, Bases and Salts
+3.1 Introduction
+Substances around us can be classified as acidic, basic, or neutral based on their chemical
+properties. An acid is a substance that releases hydrogen ions (H+) when dissolved in water.
+Common examples include hydrochloric acid (HCl), sulfuric acid (H2SO4), and acetic acid found in
+vinegar.
+3.2 Properties of Acids
+Acids taste sour, turn blue litmus paper red, and react with metals to produce hydrogen gas. They
+also react with bases in a process called neutralization, forming salt and water.
+3.3 Properties of Bases
+A base is a substance that releases hydroxide ions (OH-) when dissolved in water. Bases taste
+bitter, feel slippery to touch, and turn red litmus paper blue. Common examples include sodium
+hydroxide (NaOH) and ammonia solution.
+3.4 The pH Scale
+The pH scale measures how acidic or basic a solution is, ranging from 0 to 14. A pH of 7 is neutral,
+values below 7 indicate acidity, and values above 7 indicate basicity. Pure water has a pH of
+exactly 7.
+Figure 3.1: A diagram showing the pH scale from 0 to 14, with acids on the left, neutral at the
+center, and bases on the right.
+
