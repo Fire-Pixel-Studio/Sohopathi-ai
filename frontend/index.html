@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>সহপাঠী AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@500;600;700&family=Noto+Sans+Bengali:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#F5F0E6;
+    --cream-2:#FBF8F2;
+    --ink:#2B2823;
+    --ink-soft:#756E60;
+    --sidebar:#1C1B17;
+    --sidebar-line:rgba(255,255,255,0.08);
+    --sidebar-text:#E8E4D9;
+    --sidebar-text-soft:#9A9587;
+    --clay:#C96442;
+    --clay-soft:#F0DDD2;
+    --green:#2F5D3E;
+    --green-soft:#DCE8DD;
+    --border:rgba(43,40,35,0.13);
+    --shadow:0 1px 2px rgba(43,40,35,0.06);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    font-family:'Noto Sans Bengali','Inter',sans-serif;
+    background:var(--cream);
+    color:var(--ink);
+    display:flex;
+    overflow:hidden;
+  }
+  ::selection{background:var(--clay-soft);}
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    width:272px;
+    min-width:272px;
+    background:var(--sidebar);
+    color:var(--sidebar-text);
+    display:flex;
+    flex-direction:column;
+    padding:20px 14px;
+    height:100vh;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:6px 8px 20px;
+  }
+  .brand-mark{
+    width:30px;height:30px;border-radius:9px;
+    background:linear-gradient(155deg,var(--clay),#a84f31);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Noto Serif Bengali',serif;
+    font-weight:700;font-size:15px;color:#fff;
+    flex-shrink:0;
+  }
+  .brand-name{
+    font-family:'Noto Serif Bengali',serif;
+    font-weight:600;font-size:16.5px;
+    letter-spacing:0.01em;
+  }
+  .new-chat{
+    display:flex;align-items:center;gap:9px;
+    background:rgba(255,255,255,0.05);
+    border:0.5px solid var(--sidebar-line);
+    color:var(--sidebar-text);
+    border-radius:10px;
+    padding:10px 13px;
+    font-size:13.5px;
+    font-family:inherit;
+    cursor:pointer;
+    margin-bottom:22px;
+    transition:background 0.15s ease;
+  }
+  .new-chat:hover{background:rgba(255,255,255,0.09);}
+  .new-chat svg{flex-shrink:0;}
+
+  .side-label{
+    font-size:11px;
+    color:var(--sidebar-text-soft);
+    text-transform:uppercase;
+    letter-spacing:0.07em;
+    padding:0 8px 8px;
+  }
+  .subjects{
+    list-style:none;margin:0 0 22px;padding:0;
+    display:flex;flex-direction:column;gap:1px;
+  }
+  .subject-btn{
+    display:flex;align-items:center;gap:10px;
+    width:100%;
+    background:none;border:none;
+    color:var(--sidebar-text);
+    font-family:inherit;font-size:13.5px;
+    padding:9px 8px;border-radius:8px;
+    cursor:pointer;text-align:left;
+    transition:background 0.15s ease;
+  }
+  .subject-btn:hover{background:rgba(255,255,255,0.06);}
+  .subject-btn.active{background:rgba(201,100,66,0.16);color:#F0C9B8;}
+  .subject-dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:0.55;flex-shrink:0;}
+
+  .class-select{
+    margin:0 0 20px;
+    background:rgba(255,255,255,0.05);
+    border:0.5px solid var(--sidebar-line);
+    color:var(--sidebar-text);
+    font-family:inherit;font-size:13px;
+    border-radius:8px;padding:8px 10px;
+    width:100%;
+    cursor:pointer;
+  }
+
+  .history-scroll{
+    flex:1;overflow-y:auto;
+    display:flex;flex-direction:column;gap:1px;
+    margin:0 -4px;padding:0 4px;
+  }
+  .history-item{
+    padding:8px 8px;border-radius:8px;
+    font-size:13px;color:var(--sidebar-text-soft);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    cursor:pointer;transition:background 0.15s ease, color 0.15s ease;
+  }
+  .history-item:hover{background:rgba(255,255,255,0.06);color:var(--sidebar-text);}
+
+  .sidebar-footer{
+    border-top:0.5px solid var(--sidebar-line);
+    padding-top:12px;margin-top:8px;
+    font-size:12px;color:var(--sidebar-text-soft);
+    display:flex;align-items:center;justify-content:space-between;
+  }
+
+  /* ---------- Main ---------- */
+  .main{
+    flex:1;display:flex;flex-direction:column;
+    height:100vh;position:relative;
+    min-width:0;
+  }
+  .topbar{
+    display:flex;align-items:center;gap:12px;
+    padding:16px 28px;
+    border-bottom:0.5px solid var(--border);
+    flex-shrink:0;
+  }
+  .topbar-title{
+    font-size:14px;color:var(--ink-soft);
+  }
+  .topbar-title b{color:var(--ink);font-weight:600;}
+
+  /* ---------- Landing state ---------- */
+  .landing{
+    flex:1;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    padding:24px;text-align:center;
+    overflow-y:auto;
+  }
+  .landing-mark{
+    width:52px;height:52px;border-radius:15px;
+    background:linear-gradient(155deg,var(--clay),#a84f31);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Noto Serif Bengali',serif;
+    font-weight:700;font-size:24px;color:#fff;
+    margin-bottom:20px;
+    box-shadow:0 6px 20px rgba(201,100,66,0.25);
+  }
+  .landing h1{
+    font-family:'Noto Serif Bengali',serif;
+    font-weight:600;font-size:30px;
+    margin:0 0 10px;color:var(--ink);
+  }
+  .landing p{
+    font-size:15px;color:var(--ink-soft);
+    margin:0 0 30px;max-width:440px;line-height:1.7;
+  }
+  .quick-subjects{
+    display:flex;flex-wrap:wrap;gap:9px;
+    justify-content:center;
+    margin-bottom:34px;max-width:520px;
+  }
+  .chip{
+    display:flex;align-items:center;gap:7px;
+    background:var(--cream-2);
+    border:0.5px solid var(--border);
+    border-radius:10px;
+    padding:9px 15px;
+    font-size:13.5px;color:var(--ink);
+    cursor:pointer;font-family:inherit;
+    transition:border-color 0.15s ease, transform 0.1s ease;
+  }
+  .chip:hover{border-color:var(--clay);transform:translateY(-1px);}
+  .chip .emoji{font-size:15px;}
+
+  /* ---------- Composer ---------- */
+  .composer-wrap{
+    width:100%;max-width:700px;
+    padding:0 24px 22px;
+    flex-shrink:0;
+  }
+  .composer{
+    display:flex;align-items:flex-end;gap:8px;
+    background:var(--cream-2);
+    border:0.5px solid var(--border);
+    border-radius:20px;
+    padding:12px 12px 12px 20px;
+    box-shadow:var(--shadow);
+  }
+  .composer textarea{
+    flex:1;border:none;background:none;resize:none;
+    font-family:'Noto Sans Bengali','Inter',sans-serif;
+    font-size:14.5px;color:var(--ink);
+    line-height:1.6;max-height:140px;padding:6px 0;
+    outline:none;
+  }
+  .composer textarea::placeholder{color:#A39C8C;}
+  .composer-icon-btn{
+    width:34px;height:34px;border-radius:50%;
+    border:none;background:none;color:var(--ink-soft);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;flex-shrink:0;
+    transition:background 0.15s ease;
+  }
+  .composer-icon-btn:hover{background:rgba(43,40,35,0.06);}
+  .send-btn{
+    width:36px;height:36px;border-radius:50%;
+    border:none;background:var(--green);color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;flex-shrink:0;
+    transition:background 0.15s ease, transform 0.1s ease;
+  }
+  .send-btn:hover{background:#254a31;}
+  .send-btn:active{transform:scale(0.94);}
+  .composer-foot{
+    display:flex;justify-content:space-between;
+    font-size:11px;color:#A39C8C;
+    padding:8px 4px 0;
+  }
+
+  /* ---------- Chat ---------- */
+  .chat-view{display:none;flex:1;flex-direction:column;min-height:0;}
+  .chat-view.active{display:flex;}
+  .messages{
+    flex:1;overflow-y:auto;
+    padding:28px 28px 10px;
+    display:flex;flex-direction:column;gap:22px;
+    max-width:760px;width:100%;margin:0 auto;
+  }
+  .msg-user{align-self:flex-end;max-width:78%;}
+  .msg-user .bubble{
+    background:var(--cream-2);
+    border:0.5px solid var(--border);
+    border-radius:16px 16px 4px 16px;
+    padding:12px 16px;
+    font-size:14.5px;line-height:1.7;
+    color:var(--ink);
+  }
+  .msg-ai{align-self:flex-start;max-width:88%;width:100%;}
+  .msg-ai-inner{
+    display:flex;gap:12px;align-items:flex-start;
+  }
+  .ai-avatar{
+    width:26px;height:26px;border-radius:8px;flex-shrink:0;
+    background:linear-gradient(155deg,var(--clay),#a84f31);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Noto Serif Bengali',serif;font-weight:700;
+    font-size:12px;color:#fff;margin-top:2px;
+  }
+  .ai-content{
+    font-size:14.5px;line-height:1.85;color:var(--ink);
+    flex:1;min-width:0;
+  }
+  .ai-content h3{
+    font-family:'Noto Serif Bengali',serif;
+    font-weight:600;font-size:18px;
+    color:var(--ink);
+    margin:0 0 8px;
+  }
+  .ai-content p{margin:0 0 12px;}
+  .ai-content ul{margin:0 0 12px;padding-left:20px;}
+  .ai-content li{margin-bottom:4px;}
+  .ai-content b{font-weight:600;color:var(--ink);}
+  .summary-box{
+    background:var(--green-soft);
+    border-left:3px solid var(--green);
+    border-radius:8px;
+    padding:11px 15px;
+    margin:14px 0;
+    font-size:14px;
+  }
+  .summary-box b{color:var(--green);}
+  .practice-box{
+    border:0.5px solid var(--border);
+    border-radius:10px;
+    padding:13px 16px;
+    margin:14px 0 4px;
+    background:var(--cream-2);
+  }
+  .practice-box .practice-label{
+    font-family:'Noto Serif Bengali',serif;
+    font-weight:600;font-size:14.5px;
+    color:var(--clay);margin-bottom:4px;
+  }
+  .formula-box{
+    background:var(--ink);
+    color:var(--cream);
+    border-radius:10px;
+    padding:16px 20px;
+    margin:12px 0 16px;
+    font-family:'Inter',monospace;
+    font-size:17px;font-weight:500;
+    text-align:center;letter-spacing:0.02em;
+  }
+  .var-list{
+    list-style:none;margin:0 0 16px;padding:0;
+    display:flex;flex-direction:column;gap:6px;
+  }
+  .var-list li{
+    display:flex;gap:10px;font-size:14px;
+    padding:2px 0;
+  }
+  .var-list .var-sym{
+    font-family:'Inter',monospace;font-weight:600;
+    color:var(--clay);min-width:34px;flex-shrink:0;
+  }
+  .example-box{
+    border:0.5px solid var(--border);
+    border-left:3px solid var(--ink-soft);
+    border-radius:8px;
+    padding:14px 18px;
+    margin:14px 0;
+    background:rgba(43,40,35,0.02);
+  }
+  .example-box .example-label{
+    font-family:'Noto Serif Bengali',serif;
+    font-weight:600;font-size:14.5px;
+    color:var(--ink);margin-bottom:6px;
+  }
+  .diagram-box{
+    margin:16px 0;padding:18px;
+    background:var(--cream-2);
+    border:0.5px solid var(--border);
+    border-radius:10px;
+    display:flex;justify-content:center;
+  }
+  .cursor{
+    display:inline-block;width:2px;height:15px;
+    background:var(--ink);margin-left:1px;
+    vertical-align:middle;
+    animation:blink 0.9s steps(1) infinite;
+  }
+  @keyframes blink{50%{opacity:0;}}
+
+  @media (prefers-reduced-motion: reduce){
+    .cursor{animation:none;}
+  }
+
+  /* ---------- Mobile ---------- */
+  @media (max-width: 780px){
+    .sidebar{position:fixed;left:0;top:0;z-index:20;transform:translateX(-100%);transition:transform 0.2s ease;}
+    .sidebar.open{transform:translateX(0);}
+    .main{width:100%;}
+    .menu-btn{display:flex !important;}
+  }
+  .menu-btn{
+    display:none;
+    width:34px;height:34px;border-radius:8px;
+    border:none;background:none;color:var(--ink);
+    align-items:center;justify-content:center;cursor:pointer;
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar">
+  <div class="brand">
+    <div class="brand-mark">স</div>
+    <div class="brand-name">সহপাঠী AI</div>
+  </div>
+
+  <button class="new-chat" onclick="showLanding()">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+    নতুন চ্যাট
+  </button>
+
+  <select class="class-select" id="classSelect">
+    <option>ষষ্ঠ শ্রেণি</option>
+    <option>সপ্তম শ্রেণি</option>
+    <option>অষ্টম শ্রেণি</option>
+    <option>নবম শ্রেণি</option>
+    <option selected>দশম শ্রেণি</option>
+  </select>
+
+  <div class="side-label">সাম্প্রতিক</div>
+  <div class="history-scroll" id="historyList">
+    <div class="history-item">অম্ল ও ক্ষারের পার্থক্য</div>
+    <div class="history-item">দ্বিঘাত সমীকরণ সমাধান</div>
+    <div class="history-item">সালোকসংশ্লেষণ প্রক্রিয়া</div>
+  </div>
+
+  <div class="sidebar-footer">
+    <span>বিনামূল্যে সংস্করণ</span>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <button class="menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+    <div class="topbar-title"><b>সহপাঠী AI</b> &nbsp;·&nbsp; <span id="topbarClass">দশম শ্রেণি</span></div>
+  </div>
+
+  <!-- Landing -->
+  <section class="landing" id="landing">
+    <div class="landing-mark">স</div>
+    <h1>আজ কী শিখতে চাও?</h1>
+    <p>গণিত, বিজ্ঞান কিংবা বাংলা — ষষ্ঠ থেকে দশম শ্রেণির যেকোনো অধ্যায় থেকে প্রশ্ন করো, NCTB পাঠ্যবই অনুযায়ী সহজ ভাষায় উত্তর পাবে।</p>
+    <div class="quick-subjects">
+      <button class="chip" onclick="startChat('তোমার শ্রেণি ও অধ্যায় লিখে প্রশ্ন করো')"><span class="emoji">📐</span>গণিত জিজ্ঞাসা করো</button>
+      <button class="chip" onclick="startChat('তোমার শ্রেণি ও অধ্যায় লিখে প্রশ্ন করো')"><span class="emoji">🔬</span>বিজ্ঞান জিজ্ঞাসা করো</button>
+      <button class="chip" onclick="startChat('তোমার শ্রেণি ও অধ্যায় লিখে প্রশ্ন করো')"><span class="emoji">📖</span>বাংলা জিজ্ঞাসা করো</button>
+    </div>
+  </section>
+
+  <!-- Chat -->
+  <section class="chat-view" id="chatView">
+    <div class="messages" id="messages"></div>
+  </section>
+
+  <div class="composer-wrap" id="composerWrap" style="margin:0 auto;">
+    <div class="composer">
+      <textarea id="input" rows="1" placeholder="তোমার প্রশ্ন লেখো... (যেমন: নবম শ্রেণির রসায়নের ৩য় অধ্যায় বুঝিয়ে দাও)"></textarea>
+      <button class="composer-icon-btn" title="মাইক্রোফোন">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4"/></svg>
+      </button>
+      <button class="send-btn" id="sendBtn" title="পাঠাও">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+      </button>
+    </div>
+    <div class="composer-foot">
+      <span>সহপাঠী AI ভুল করতে পারে। গুরুত্বপূর্ণ তথ্য যাচাই করো।</span>
+      <span>শিফট+এন্টার = নতুন লাইন</span>
+    </div>
+  </div>
+</main>
+
+<script>
+const landing = document.getElementById('landing');
+const chatView = document.getElementById('chatView');
+const messages = document.getElementById('messages');
+const input = document.getElementById('input');
+const sendBtn = document.getElementById('sendBtn');
+const classSelect = document.getElementById('classSelect');
+const topbarClass = document.getElementById('topbarClass');
+
+classSelect.addEventListener('change', ()=>{
+  topbarClass.textContent = classSelect.value;
+});
+
+function showLanding(){
+  landing.style.display='flex';
+  chatView.classList.remove('active');
+  messages.innerHTML='';
+  input.value='';
+}
+
+function startChat(placeholderText){
+  landing.style.display='none';
+  chatView.classList.add('active');
+  input.focus();
+}
+
+function autoGrow(){
+  input.style.height='auto';
+  input.style.height = Math.min(input.scrollHeight, 140)+'px';
+}
+input.addEventListener('input', autoGrow);
+input.addEventListener('keydown', (e)=>{
+  if(e.key==='Enter' && !e.shiftKey){
+    e.preventDefault();
+    handleSend();
+  }
+});
+sendBtn.addEventListener('click', handleSend);
+
+function addUserMessage(text){
+  const div = document.createElement('div');
+  div.className='msg-user';
+  div.innerHTML = `<div class="bubble"></div>`;
+  div.querySelector('.bubble').textContent = text;
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function addAiMessageStreaming(htmlBlocks){
+  const wrap = document.createElement('div');
+  wrap.className='msg-ai';
+  wrap.innerHTML = `
+    <div class="msg-ai-inner">
+      <div class="ai-avatar">স</div>
+      <div class="ai-content" id="stream-target"></div>
+    </div>`;
+  messages.appendChild(wrap);
+  const target = wrap.querySelector('#stream-target');
+  target.removeAttribute('id');
+  messages.scrollTop = messages.scrollHeight;
+  streamContent(target, htmlBlocks);
+}
+
+// Streams a sequence of {type, text} blocks into the target element,
+// revealing text character by character with a blinking cursor.
+function streamContent(target, blocks){
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let blockIndex = 0;
+  let charIndex = 0;
+  const cursor = document.createElement('span');
+  cursor.className='cursor';
+
+  function renderBlockShell(block){
+    let el;
+    if(block.type==='h3'){ el=document.createElement('h3'); }
+    else if(block.type==='summary'){ el=document.createElement('div'); el.className='summary-box'; }
+    else if(block.type==='practice'){
+      el=document.createElement('div'); el.className='practice-box';
+      const label=document.createElement('div'); label.className='practice-label'; label.textContent='অনুশীলন প্রশ্ন';
+      el.appendChild(label);
+      const body=document.createElement('div'); el.appendChild(body);
+      target.appendChild(el);
+      return body;
+    }
+    else if(block.type==='ul'){ el=document.createElement('ul'); }
+    else if(block.type==='formula'){ el=document.createElement('div'); el.className='formula-box'; }
+    else if(block.type==='varlist'){ el=document.createElement('ul'); el.className='var-list'; }
+    else if(block.type==='example'){
+      el=document.createElement('div'); el.className='example-box';
+      const label=document.createElement('div'); label.className='example-label'; label.textContent='উদাহরণ';
+      el.appendChild(label);
+      const body=document.createElement('div'); el.appendChild(body);
+      target.appendChild(el);
+      return body;
+    }
+    else if(block.type==='diagram'){
+      el=document.createElement('div'); el.className='diagram-box';
+      el.innerHTML = block.svg;
+      target.appendChild(el);
+      return null; // rendered instantly, not streamed char-by-char
+    }
+    else { el=document.createElement('p'); }
+    target.appendChild(el);
+    return el;
+  }
+
+  if(reduceMotion){
+    blocks.forEach(b=>{
+      if(b.type==='ul' || b.type==='varlist'){
+        const ul=renderBlockShell(b);
+        b.items.forEach(it=>{
+          const li=document.createElement('li');
+          if(b.type==='varlist'){
+            li.innerHTML = `<span class="var-sym">${it.sym}</span><span>${it.desc}</span>`;
+          } else { li.innerHTML=it; }
+          ul.appendChild(li);
+        });
+      } else if(b.type==='diagram'){
+        renderBlockShell(b);
+      } else {
+        const el=renderBlockShell(b);
+        el.innerHTML=b.text;
+      }
+    });
+    return;
+  }
+
+  let currentEl = null;
+  let currentLis = [];
+  let liIdx = 0;
+
+  function tick(){
+    if(blockIndex >= blocks.length){
+      if(currentEl && currentEl.contains(cursor)) cursor.remove();
+      return;
+    }
+    const block = blocks[blockIndex];
+
+    if(block.type==='diagram'){
+      renderBlockShell(block);
+      blockIndex++;
+      messages.scrollTop = messages.scrollHeight;
+      setTimeout(()=>requestAnimationFrame(tick), 120);
+      return;
+    }
+
+    if(block.type==='ul' || block.type==='varlist'){
+      if(!currentEl){ currentEl = renderBlockShell(block); liIdx=0; charIndex=0; }
+      if(liIdx >= block.items.length){ blockIndex++; currentEl=null; requestAnimationFrame(tick); return; }
+      let li = currentEl.children[liIdx];
+      if(!li){ li=document.createElement('li'); currentEl.appendChild(li); li.appendChild(cursor); }
+      const full = block.type==='varlist'
+        ? `<span class="var-sym">${block.items[liIdx].sym}</span><span>${block.items[liIdx].desc}</span>`
+        : block.items[liIdx];
+      const plain = full.replace(/<[^>]+>/g,'');
+      if(charIndex <= plain.length){
+        li.textContent = plain.slice(0, charIndex);
+        li.appendChild(cursor);
+        charIndex++;
+        messages.scrollTop = messages.scrollHeight;
+        setTimeout(()=>requestAnimationFrame(tick), 10);
+      } else {
+        li.innerHTML = full;
+        liIdx++; charIndex=0;
+        requestAnimationFrame(tick);
+      }
+      return;
+    }
+
+    if(!currentEl){ currentEl = renderBlockShell(block); currentEl.appendChild(cursor); charIndex=0; }
+    const plain = block.text.replace(/<[^>]+>/g,'');
+    if(charIndex <= plain.length){
+      currentEl.textContent = plain.slice(0, charIndex);
+      currentEl.appendChild(cursor);
+      charIndex++;
+      messages.scrollTop = messages.scrollHeight;
+      setTimeout(()=>requestAnimationFrame(tick), 10);
+    } else {
+      currentEl.innerHTML = block.text;
+      blockIndex++; currentEl=null;
+      requestAnimationFrame(tick);
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+// Demo response generator — swap this for a real API call to your backend.
+// (Browser can't call Ollama Cloud directly with the API key exposed —
+// this needs to go through a small server-side proxy, e.g. a Cloudflare Worker.)
+const forceDiagramSVG = `
+<svg width="420" height="150" viewBox="0 0 420 150" xmlns="http://www.w3.org/2000/svg">
+  <rect x="150" y="55" width="70" height="45" rx="5" fill="#F5F0E6" stroke="#2B2823" stroke-width="1.5"/>
+  <text x="185" y="82" text-anchor="middle" font-family="Noto Sans Bengali, sans-serif" font-size="12" fill="#2B2823">বস্তু (m)</text>
+  <line x1="220" y1="77" x2="290" y2="77" stroke="#C96442" stroke-width="2.5"/>
+  <polygon points="290,71 302,77 290,83" fill="#C96442"/>
+  <text x="296" y="60" text-anchor="middle" font-family="Inter, sans-serif" font-size="13" font-weight="600" fill="#C96442">F</text>
+  <line x1="185" y1="100" x2="185" y2="130" stroke="#2F5D3E" stroke-width="2" stroke-dasharray="3,3"/>
+  <polygon points="180,124 185,134 190,124" fill="#2F5D3E"/>
+  <text x="185" y="146" text-anchor="middle" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#2F5D3E">a</text>
+</svg>`;
+
+function getDemoResponse(question, studentClass){
+  return [
+    {type:'h3', text:'নিউটনের দ্বিতীয় সূত্র'},
+    {type:'p', text:'কোনো বস্তুর ভরবেগের পরিবর্তনের হার প্রযুক্ত বলের সমানুপাতিক এবং পরিবর্তনটি বলের দিকেই ঘটে।'},
+    {type:'p', text:'<b>সহজভাবে বললে —</b> কোনো বস্তুর ওপর বেশি বল প্রয়োগ করলে তার ত্বরণ বেশি হয়। আবার একই বল ভারী বস্তুর তুলনায় হালকা বস্তুকে বেশি ত্বরণ দেয়।'},
+    {type:'diagram', svg: forceDiagramSVG},
+    {type:'h3', text:'গাণিতিক রূপ'},
+    {type:'formula', text:'F = ma'},
+    {type:'varlist', items:[
+      {sym:'F', desc:'= প্রযুক্ত বল, একক নিউটন (N)'},
+      {sym:'m', desc:'= বস্তুর ভর, একক কিলোগ্রাম (kg)'},
+      {sym:'a', desc:'= ত্বরণ, একক মিটার/সেকেন্ড² (m/s²)'}
+    ]},
+    {type:'p', text:'অতএব, ১ kg ভরের বস্তুর মধ্যে ১ m/s² ত্বরণ সৃষ্টি করতে যে বল লাগে, তাকে ১ নিউটন বলে।'},
+    {type:'example', text:'একটি ফুটবলের ভর (০.৫ kg)। এটিকে লাথি দেওয়ার ফলে (৮ m/s²) ত্বরণ সৃষ্টি হলো। প্রযুক্ত বল কত?<br><br><b>সমাধান:</b> F = ma = ০.৫ × ৮ = <b>৪ নিউটন</b>'},
+    {type:'summary', text:'<b>সংক্ষিপ্ত উত্তর:</b> F = ma — বল সমান ভর গুণ ত্বরণ।'},
+    {type:'practice', text:'একটি সাইকেলের ভর ১২ kg। এটিকে ২ m/s² ত্বরণ দিতে কত বল প্রয়োজন হবে?'}
+  ];
+}
+
+function handleSend(){
+  const text = input.value.trim();
+  if(!text) return;
+  const selectedClass = classSelect.value;
+  addUserMessage(text);
+  input.value='';
+  autoGrow();
+  setTimeout(()=>{
+    addAiMessageStreaming(getDemoResponse(text, selectedClass));
+  }, 350);
+}
+</script>
+
+</body>
+</html>
