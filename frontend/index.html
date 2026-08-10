@@ -134,8 +134,56 @@
     border-top:0.5px solid var(--sidebar-line);
     padding-top:12px;margin-top:8px;
     font-size:12px;color:var(--sidebar-text-soft);
-    display:flex;align-items:center;justify-content:space-between;
   }
+  .settings-btn{
+    display:flex;align-items:center;gap:9px;
+    width:100%;background:none;border:none;
+    color:var(--sidebar-text-soft);font-family:inherit;
+    font-size:13px;padding:8px;border-radius:8px;
+    cursor:pointer;transition:background 0.15s ease, color 0.15s ease;
+  }
+  .settings-btn:hover{background:rgba(255,255,255,0.06);color:var(--sidebar-text);}
+  .history-empty{
+    font-size:12.5px;color:var(--sidebar-text-soft);
+    padding:8px;opacity:0.7;
+  }
+
+  .settings-overlay{
+    display:none;position:fixed;inset:0;
+    background:rgba(20,18,15,0.45);
+    z-index:50;align-items:center;justify-content:center;
+  }
+  .settings-overlay.open{display:flex;}
+  .settings-panel{
+    background:var(--cream-2);
+    border-radius:16px;
+    width:360px;max-width:90vw;
+    box-shadow:0 20px 50px rgba(0,0,0,0.25);
+    overflow:hidden;
+  }
+  .settings-header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 18px;border-bottom:0.5px solid var(--border);
+    font-family:'Noto Serif Bengali',serif;font-weight:600;font-size:15px;
+  }
+  .settings-close{
+    background:none;border:none;font-size:20px;
+    color:var(--ink-soft);cursor:pointer;line-height:1;
+  }
+  .settings-body{padding:18px;}
+  .settings-desc{font-size:13px;color:var(--ink-soft);margin:0 0 16px;line-height:1.6;}
+  .settings-stat{
+    display:flex;justify-content:space-between;align-items:center;
+    font-size:13.5px;padding:9px 0;border-bottom:0.5px solid var(--border);
+  }
+  .danger-btn{
+    width:100%;margin-top:18px;
+    background:#B3432F;color:#fff;border:none;
+    padding:11px;border-radius:10px;font-family:inherit;
+    font-size:13.5px;cursor:pointer;
+    transition:background 0.15s ease;
+  }
+  .danger-btn:hover{background:#8f3323;}
 
   /* ---------- Main ---------- */
   .main{
@@ -359,8 +407,16 @@
     background:var(--cream-2);
     border:0.5px solid var(--border);
     border-radius:10px;
-    display:flex;justify-content:center;
+    display:flex;flex-direction:column;align-items:center;gap:10px;
   }
+  .diagram-download{
+    display:flex;align-items:center;gap:6px;
+    background:none;border:0.5px solid var(--border);
+    color:var(--ink-soft);font-family:inherit;font-size:12px;
+    padding:6px 12px;border-radius:8px;cursor:pointer;
+    transition:background 0.15s ease;
+  }
+  .diagram-download:hover{background:rgba(43,40,35,0.05);}
   .cursor{
     display:inline-block;width:2px;height:15px;
     background:var(--ink);margin-left:1px;
@@ -419,15 +475,38 @@
 
   <div class="side-label">সাম্প্রতিক</div>
   <div class="history-scroll" id="historyList">
-    <div class="history-item">অম্ল ও ক্ষারের পার্থক্য</div>
-    <div class="history-item">দ্বিঘাত সমীকরণ সমাধান</div>
-    <div class="history-item">সালোকসংশ্লেষণ প্রক্রিয়া</div>
+    <div class="history-empty" id="historyEmpty">এখনো কোনো চ্যাট নেই</div>
   </div>
 
   <div class="sidebar-footer">
-    <span>বিনামূল্যে সংস্করণ</span>
+    <button class="settings-btn" id="settingsBtn" type="button">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      সেটিংস
+    </button>
   </div>
 </aside>
+
+<!-- Settings panel -->
+<div class="settings-overlay" id="settingsOverlay">
+  <div class="settings-panel">
+    <div class="settings-header">
+      <span>সেটিংস ও স্টোরেজ</span>
+      <button class="settings-close" id="settingsClose" type="button">&times;</button>
+    </div>
+    <div class="settings-body">
+      <p class="settings-desc">তোমার সব চ্যাট এই ব্রাউজারেই সংরক্ষিত থাকে — কোনো সার্ভারে পাঠানো হয় না।</p>
+      <div class="settings-stat">
+        <span>সংরক্ষিত চ্যাট সংখ্যা</span>
+        <b id="statChatCount">0</b>
+      </div>
+      <div class="settings-stat">
+        <span>আনুমানিক স্টোরেজ ব্যবহার</span>
+        <b id="statStorageSize">0 KB</b>
+      </div>
+      <button class="danger-btn" id="clearDataBtn" type="button">সব তথ্য মুছে ফেলো</button>
+    </div>
+  </div>
+</div>
 
 <main class="main">
   <div class="topbar">
@@ -484,11 +563,113 @@ classSelect.addEventListener('change', ()=>{
   topbarClass.textContent = classSelect.value;
 });
 
+// ---------- Local chat history (stored only in this browser) ----------
+const CHATS_KEY = 'sohopathi_chats';
+let currentChatId = null;
+
+function loadChats(){
+  try{ return JSON.parse(localStorage.getItem(CHATS_KEY)) || []; }
+  catch(e){ return []; }
+}
+function saveChats(chats){
+  localStorage.setItem(CHATS_KEY, JSON.stringify(chats));
+}
+function renderHistoryList(){
+  const chats = loadChats().sort((a,b)=> b.updatedAt - a.updatedAt);
+  const historyList = document.getElementById('historyList');
+  const emptyMsg = document.getElementById('historyEmpty');
+  historyList.querySelectorAll('.history-item').forEach(el=>el.remove());
+  if(chats.length === 0){
+    if(emptyMsg) emptyMsg.style.display='block';
+    return;
+  }
+  if(emptyMsg) emptyMsg.style.display='none';
+  chats.forEach(chat=>{
+    const item = document.createElement('div');
+    item.className='history-item';
+    item.textContent = chat.title;
+    item.addEventListener('click', ()=> loadChat(chat.id));
+    historyList.appendChild(item);
+  });
+}
+function createNewChat(firstQuestion){
+  const chats = loadChats();
+  const id = 'chat_' + Date.now();
+  chats.push({
+    id,
+    title: firstQuestion.slice(0, 40),
+    updatedAt: Date.now(),
+    messages: []
+  });
+  saveChats(chats);
+  currentChatId = id;
+  renderHistoryList();
+  return id;
+}
+function appendToChat(role, text){
+  if(!currentChatId) return;
+  const chats = loadChats();
+  const chat = chats.find(c => c.id === currentChatId);
+  if(!chat) return;
+  chat.messages.push({ role, text });
+  chat.updatedAt = Date.now();
+  saveChats(chats);
+  renderHistoryList();
+}
+function loadChat(id){
+  const chats = loadChats();
+  const chat = chats.find(c => c.id === id);
+  if(!chat) return;
+  currentChatId = id;
+  landing.style.display='none';
+  chatView.classList.add('active');
+  messages.innerHTML='';
+  chat.messages.forEach(m=>{
+    if(m.role === 'user') addUserMessage(m.text);
+    else {
+      const wrap = document.createElement('div');
+      wrap.className='msg-ai';
+      wrap.innerHTML = `<div class="msg-ai-inner"><div class="ai-avatar">স</div><div class="ai-content"></div></div>`;
+      messages.appendChild(wrap);
+      const target = wrap.querySelector('.ai-content');
+      streamContent(target, markdownToBlocks(m.text), () => addMessageFooter(wrap, target));
+    }
+  });
+  messages.scrollTop = messages.scrollHeight;
+}
+
+// ---------- Settings / storage panel ----------
+const settingsOverlay = document.getElementById('settingsOverlay');
+document.getElementById('settingsBtn').addEventListener('click', ()=>{
+  const chats = loadChats();
+  document.getElementById('statChatCount').textContent = chats.length;
+  const bytes = new Blob([JSON.stringify(chats)]).size;
+  document.getElementById('statStorageSize').textContent = (bytes/1024).toFixed(1) + ' KB';
+  settingsOverlay.classList.add('open');
+});
+document.getElementById('settingsClose').addEventListener('click', ()=>{
+  settingsOverlay.classList.remove('open');
+});
+settingsOverlay.addEventListener('click', (e)=>{
+  if(e.target === settingsOverlay) settingsOverlay.classList.remove('open');
+});
+document.getElementById('clearDataBtn').addEventListener('click', ()=>{
+  if(confirm('তুমি কি নিশ্চিত? সব সংরক্ষিত চ্যাট মুছে যাবে, এটি ফিরিয়ে আনা যাবে না।')){
+    localStorage.removeItem(CHATS_KEY);
+    currentChatId = null;
+    renderHistoryList();
+    settingsOverlay.classList.remove('open');
+    showLanding();
+  }
+});
+renderHistoryList();
+
 function showLanding(){
   landing.style.display='flex';
   chatView.classList.remove('active');
   messages.innerHTML='';
   input.value='';
+  currentChatId = null;
 }
 
 function startChat(placeholderText){
@@ -589,7 +770,22 @@ function streamContent(target, blocks, onComplete){
     }
     else if(block.type==='diagram'){
       el=document.createElement('div'); el.className='diagram-box';
-      el.innerHTML = block.svg;
+      const svgWrap = document.createElement('div');
+      svgWrap.innerHTML = block.svg;
+      el.appendChild(svgWrap);
+      const dlBtn = document.createElement('button');
+      dlBtn.className='diagram-download';
+      dlBtn.type='button';
+      dlBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> ডাউনলোড`;
+      dlBtn.addEventListener('click', ()=>{
+        const blob = new Blob([block.svg], {type:'image/svg+xml'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'diagram.svg';
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+      el.appendChild(dlBtn);
       target.appendChild(el);
       return null; // rendered instantly, not streamed char-by-char
     }
@@ -832,7 +1028,9 @@ async function handleSend(){
   if(!text) return;
   const selectedClass = classSelect.value;
   ensureChatVisible();
+  if(!currentChatId) createNewChat(text);
   addUserMessage(text);
+  appendToChat('user', text);
   input.value='';
   autoGrow();
   sendBtn.disabled = true;
@@ -842,6 +1040,7 @@ async function handleSend(){
     const answerText = await askBackend(text, selectedClass);
     removeLoadingMessage();
     addAiMessageStreaming(markdownToBlocks(answerText));
+    appendToChat('ai', answerText);
   } catch(err){
     removeLoadingMessage();
     addAiMessageStreaming([{type:'p', text: 'দুঃখিত, একটি সমস্যা হয়েছে। আবার চেষ্টা করো। (' + err.message + ')'}]);
