@@ -716,9 +716,27 @@ function getDemoResponse(question, studentClass){
 }
 
 // Convert the AI's markdown-ish text response into the block format our streamer understands.
+// Strips anything dangerous out of AI-generated SVG before it's inserted into the page.
+function sanitizeSvg(svg){
+  return svg
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/\son\w+="[^"]*"/gi, '')
+    .replace(/\son\w+='[^']*'/gi, '')
+    .replace(/javascript:/gi, '');
+}
+
 function markdownToBlocks(markdown){
   const blocks = [];
-  const lines = markdown.split('\n');
+
+  // Pull out ```svg ... ``` fenced diagrams first, replacing each with a marker
+  // so we can slot a real diagram block into the right position below.
+  const diagrams = [];
+  const withoutSvg = markdown.replace(/```svg\s*([\s\S]*?)```/gi, (match, svgCode) => {
+    diagrams.push(sanitizeSvg(svgCode.trim()));
+    return `\n@@DIAGRAM_${diagrams.length - 1}@@\n`;
+  });
+
+  const lines = withoutSvg.split('\n');
   let listBuffer = [];
 
   function flushList(){
@@ -746,6 +764,12 @@ function markdownToBlocks(markdown){
   for(const rawLine of lines){
     const line = rawLine.trim();
     if(line === ''){ flushParagraph(); flushList(); continue; }
+    const diagramMatch = line.match(/^@@DIAGRAM_(\d+)@@$/);
+    if(diagramMatch){
+      flushParagraph(); flushList();
+      blocks.push({type:'diagram', svg: diagrams[parseInt(diagramMatch[1])]});
+      continue;
+    }
     if(line.startsWith('###') || line.startsWith('##') || line.startsWith('#')){
       flushParagraph(); flushList();
       blocks.push({type:'h3', text: inline(line.replace(/^#+\s*/, ''))});
