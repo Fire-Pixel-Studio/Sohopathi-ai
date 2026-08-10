@@ -184,17 +184,30 @@
     justify-content:center;
     margin-bottom:34px;max-width:520px;
   }
+  .msg-footer{
+    display:flex;align-items:center;gap:10px;
+    margin-top:10px;padding-top:8px;
+    font-size:11.5px;color:#A39C8C;
+  }
+  .msg-footer .copy-btn{
+    display:flex;align-items:center;gap:5px;
+    background:none;border:none;color:#A39C8C;
+    font-family:inherit;font-size:11.5px;
+    cursor:pointer;padding:3px 6px;border-radius:6px;
+    transition:background 0.15s ease, color 0.15s ease;
+  }
+  .msg-footer .copy-btn:hover{background:rgba(43,40,35,0.06);color:var(--ink-soft);}
   .chip{
     display:flex;align-items:center;gap:7px;
     background:var(--cream-2);
     border:0.5px solid var(--border);
     border-radius:10px;
     padding:9px 15px;
-    font-size:13.5px;color:var(--ink);
-    cursor:pointer;font-family:inherit;
-    transition:border-color 0.15s ease, transform 0.1s ease;
+    font-size:13.5px;color:var(--ink-soft);
+    font-family:inherit;
+    cursor:default;
+    opacity:0.85;
   }
-  .chip:hover{border-color:var(--clay);transform:translateY(-1px);}
   .chip .emoji{font-size:15px;}
 
   /* ---------- Composer ---------- */
@@ -355,9 +368,17 @@
     animation:blink 0.9s steps(1) infinite;
   }
   @keyframes blink{50%{opacity:0;}}
+  .loading-text{
+    animation:fadepulse 1.4s ease-in-out infinite;
+  }
+  @keyframes fadepulse{
+    0%,100%{opacity:0.35;}
+    50%{opacity:1;}
+  }
 
   @media (prefers-reduced-motion: reduce){
     .cursor{animation:none;}
+    .loading-text{animation:none;}
   }
 
   /* ---------- Mobile ---------- */
@@ -420,11 +441,11 @@
   <section class="landing" id="landing">
     <div class="landing-mark">স</div>
     <h1>আজ কী শিখতে চাও?</h1>
-    <p>গণিত, বিজ্ঞান কিংবা বাংলা — ষষ্ঠ থেকে দশম শ্রেণির যেকোনো অধ্যায় থেকে প্রশ্ন করো, NCTB পাঠ্যবই অনুযায়ী সহজ ভাষায় উত্তর পাবে।</p>
+    <p>গণিত, বিজ্ঞান কিংবা বাংলা — ষষ্ঠ থেকে দশম শ্রেণির যেকোনো অধ্যায় থেকে প্রশ্ন করো, সহজ ভাষায় উত্তর পাবে।</p>
     <div class="quick-subjects">
-      <button class="chip" onclick="startChat('তোমার শ্রেণি ও অধ্যায় লিখে প্রশ্ন করো')"><span class="emoji">📐</span>গণিত জিজ্ঞাসা করো</button>
-      <button class="chip" onclick="startChat('তোমার শ্রেণি ও অধ্যায় লিখে প্রশ্ন করো')"><span class="emoji">🔬</span>বিজ্ঞান জিজ্ঞাসা করো</button>
-      <button class="chip" onclick="startChat('তোমার শ্রেণি ও অধ্যায় লিখে প্রশ্ন করো')"><span class="emoji">📖</span>বাংলা জিজ্ঞাসা করো</button>
+      <div class="chip"><span class="emoji">📐</span>গণিত</div>
+      <div class="chip"><span class="emoji">🔬</span>বিজ্ঞান</div>
+      <div class="chip"><span class="emoji">📖</span>বাংলা</div>
     </div>
   </section>
 
@@ -510,12 +531,33 @@ function addAiMessageStreaming(htmlBlocks){
   const target = wrap.querySelector('#stream-target');
   target.removeAttribute('id');
   messages.scrollTop = messages.scrollHeight;
-  streamContent(target, htmlBlocks);
+  streamContent(target, htmlBlocks, () => addMessageFooter(wrap, target));
+}
+
+function addMessageFooter(wrapEl, contentEl){
+  const footer = document.createElement('div');
+  footer.className='msg-footer';
+  footer.innerHTML = `
+    <button class="copy-btn" type="button">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      কপি
+    </button>
+    <span>এইমাত্র</span>
+  `;
+  wrapEl.querySelector('.msg-ai-inner').appendChild(footer);
+  const copyBtn = footer.querySelector('.copy-btn');
+  copyBtn.addEventListener('click', ()=>{
+    navigator.clipboard.writeText(contentEl.innerText).then(()=>{
+      const original = copyBtn.innerHTML;
+      copyBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> কপি হয়েছে`;
+      setTimeout(()=>{ copyBtn.innerHTML = original; }, 1600);
+    });
+  });
 }
 
 // Streams a sequence of {type, text} blocks into the target element,
 // revealing text character by character with a blinking cursor.
-function streamContent(target, blocks){
+function streamContent(target, blocks, onComplete){
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let blockIndex = 0;
   let charIndex = 0;
@@ -574,6 +616,7 @@ function streamContent(target, blocks){
         el.innerHTML=b.text;
       }
     });
+    if(onComplete) onComplete();
     return;
   }
 
@@ -584,6 +627,7 @@ function streamContent(target, blocks){
   function tick(){
     if(blockIndex >= blocks.length){
       if(currentEl && currentEl.contains(cursor)) cursor.remove();
+      if(onComplete) onComplete();
       return;
     }
     const block = blocks[blockIndex];
@@ -742,7 +786,7 @@ function addLoadingMessage(){
   wrap.innerHTML = `
     <div class="msg-ai-inner">
       <div class="ai-avatar">স</div>
-      <div class="ai-content" style="color:var(--ink-soft);">ভাবছি...</div>
+      <div class="ai-content loading-text" style="color:var(--ink-soft);">ভাবছি...</div>
     </div>`;
   messages.appendChild(wrap);
   messages.scrollTop = messages.scrollHeight;
@@ -752,10 +796,18 @@ function removeLoadingMessage(){
   if(el) el.remove();
 }
 
+function ensureChatVisible(){
+  if(!chatView.classList.contains('active')){
+    landing.style.display='none';
+    chatView.classList.add('active');
+  }
+}
+
 async function handleSend(){
   const text = input.value.trim();
   if(!text) return;
   const selectedClass = classSelect.value;
+  ensureChatVisible();
   addUserMessage(text);
   input.value='';
   autoGrow();
