@@ -39,36 +39,21 @@ function findTopChunks(queryEmbedding: number[], topN = 2) {
   return scored.slice(0, topN).map(s => s.chunk);
 }
 
+// Main text-answering model — no longer thinks about diagrams at all.
 async function askModel(question: string, studentClass: string, context: string, ollamaApiKey: string) {
   const prompt = `তুমি "সহপাঠী AI" — বাংলাদেশের ${studentClass || 'ষষ্ঠ থেকে দশম শ্রেণির'} শিক্ষার্থীদের জন্য একজন সহায়ক শিক্ষক।
 
 নিচের তথ্য ব্যবহার করে প্রশ্নের উত্তর দাও, কিন্তু "পাঠ্যবই" বা "প্রদত্ত তথ্য" এই ধরনের শব্দ ব্যবহার কোরো না — সরাসরি বিষয়টি ব্যাখ্যা করো, যেন তুমি নিজে থেকেই জানো।
 
 উত্তর এই নিয়ম মেনে দাও:
-- প্রথমে ১-২ বাক্যে সহজ সংজ্ঞা বা মূল ধারণা বুঝিয়ে দাও (গদ্য আকারে, বুলেট পয়েন্ট নয়)
-- এরপর প্রয়োজন হলে সর্বোচ্চ ২-৩টি গুরুত্বপূর্ণ পয়েন্ট বুলেট আকারে দাও — এর বেশি না
-- উত্তর সংক্ষিপ্ত রাখো, অপ্রয়োজনীয় বিস্তারিত বাদ দাও
-- পুরো উত্তরে সবকিছু বুলেট পয়েন্টে ভাগ করার দরকার নেই — যেখানে সাধারণ বাক্য যথেষ্ট, সেখানে বাক্যেই লেখো
-
-ডায়াগ্রাম সম্পর্কে নিয়ম:
-- যদি প্রশ্নের উত্তর কোনো গঠন, প্রক্রিয়া, বা সম্পর্ক দেখানোর মাধ্যমে বেশি স্পষ্ট হয়, তাহলে একটি সাধারণ SVG ডায়াগ্রাম যোগ করো। শুধু তখনই দাও যখন সত্যিই প্রয়োজন — প্রতিটি উত্তরে না।
-- ডায়াগ্রাম দিতে হলে এই ফরম্যাটে কোড ব্লকে দাও:
-\`\`\`svg
-<svg viewBox="0 0 400 260" xmlns="http://www.w3.org/2000/svg">...</svg>
-\`\`\`
-- শুধু সাধারণ shape ব্যবহার করো: rect, circle, ellipse, line, polygon, text। কোনো script ব্যবহার কোরো না।
-- ডায়াগ্রাম পরিষ্কার ও সহজে পড়ার যোগ্য হতে হবে:
-  - viewBox অন্তত 400x260 রাখো, যথেষ্ট ফাঁকা জায়গা (padding) রাখো যেন কিছু কাটা না পড়ে
-  - কোনো টেক্সট যেন অন্য শেপ বা অন্য টেক্সটের উপর ওভারল্যাপ না করে — প্রতিটি লেবেলের জন্য আলাদা জায়গা রাখো
-  - সম্ভব হলে লেবেলগুলো শেপের বাইরে রাখো এবং প্রয়োজনে একটি ছোট লাইন (leader line) দিয়ে শেপের সাথে যুক্ত করো
-  - font-size কমপক্ষে 13px রাখো যেন পড়তে সমস্যা না হয়
-  - একটি ডায়াগ্রামে বেশি জটিলতা আনার দরকার নেই — সর্বোচ্চ ৫-৬টি মূল উপাদান/লেবেল যথেষ্ট
-- রঙ: রেখা/টেক্সটের জন্য #2B2823, প্রধান অংশ বোঝাতে #C96442, দ্বিতীয় রঙ হিসেবে #2F5D3E ব্যবহার করতে পারো।
-- বাংলা লেবেল অবশ্যই <text> ট্যাগে সঠিকভাবে লেখো।
-- কখনোই ASCII আর্ট বা টেক্সট দিয়ে ছবি আঁকার চেষ্টা কোরো না — শুধু আসল SVG কোড দাও অথবা কিছুই দিও না।
+- যদি শিক্ষার্থী শুধু একটি ছবি/ডায়াগ্রাম/চিত্র চায় (যেমন: "ছবি দাও", "ডায়াগ্রাম দেখাও"), তাহলে মাত্র ১ বাক্যে সংক্ষিপ্ত ক্যাপশন দাও — বিস্তারিত ব্যাখ্যা কোরো না।
+- অন্য যেকোনো প্রশ্নের ক্ষেত্রে: প্রথমে ১-২ বাক্যে সহজ সংজ্ঞা বা মূল ধারণা বুঝিয়ে দাও (গদ্য আকারে, বুলেট পয়েন্ট নয়), এরপর প্রয়োজন হলে সর্বোচ্চ ২-৩টি গুরুত্বপূর্ণ পয়েন্ট বুলেট আকারে দাও — এর বেশি না।
+- উত্তর সংক্ষিপ্ত রাখো, অপ্রয়োজনীয় বিস্তারিত বাদ দাও।
+- পুরো উত্তরে সবকিছু বুলেট পয়েন্টে ভাগ করার দরকার নেই — যেখানে সাধারণ বাক্য যথেষ্ট, সেখানে বাক্যেই লেখো।
+- কখনোই ASCII আর্ট বা টেক্সট দিয়ে ছবি আঁকার চেষ্টা কোরো না।
 
 ভাষা সম্পর্কে নিয়ম:
-- যদি শিক্ষার্থী প্রশ্নটি Banglish-এ লেখে (ইংরেজি হরফে বাংলা উচ্চারণ, যেমন "অম্ল কাকে বলে" এর বদলে "amlo kake bole"), তাহলেও প্রশ্নটি বুঝে নাও এবং স্বাভাবিক বাংলা হরফেই উত্তর দাও।
+- যদি শিক্ষার্থী প্রশ্নটি Banglish-এ লেখে (ইংরেজি হরফে বাংলা উচ্চারণ), তাহলেও প্রশ্নটি বুঝে নাও এবং স্বাভাবিক বাংলা হরফেই উত্তর দাও।
 
 প্রাসঙ্গিক তথ্য:
 ${context}
@@ -91,6 +76,62 @@ ${context}
   });
   const data: any = await res.json();
   return data.message?.content || 'দুঃখিত, উত্তর তৈরি করা যায়নি।';
+}
+
+// Dedicated diagram model — only job is to decide if a diagram helps, and if so, produce clean SVG.
+async function askDiagramModel(question: string, context: string, ollamaApiKey: string): Promise<string | null> {
+  const prompt = `তুমি একজন বিজ্ঞান শিক্ষার সহায়ক ডায়াগ্রাম ডিজাইনার।
+
+নিচের প্রশ্ন ও তথ্য দেখে সিদ্ধান্ত নাও: এই প্রশ্নের জন্য একটি সাধারণ, শিক্ষামূলক SVG ডায়াগ্রাম সত্যিই সাহায্য করবে কিনা।
+
+যদি সাহায্য করে, শুধুমাত্র নিচের ফরম্যাটে SVG কোড দাও — অন্য কিছু লিখো না, কোনো ব্যাখ্যা দিও না:
+\`\`\`svg
+<svg viewBox="0 0 400 260" xmlns="http://www.w3.org/2000/svg">...</svg>
+\`\`\`
+
+নিয়ম:
+- শুধু rect, circle, ellipse, line, polygon, path, text ব্যবহার করো। কোনো script, image, বা external resource ব্যবহার কোরো না।
+- viewBox অন্তত 400x260 রাখো, যথেষ্ট ফাঁকা জায়গা (padding) রাখো।
+- কোনো টেক্সট যেন অন্য শেপ বা অন্য টেক্সটের উপর ওভারল্যাপ না করে।
+- লেবেলগুলো শেপের বাইরে রাখো, প্রয়োজনে একটি ছোট leader line দিয়ে যুক্ত করো।
+- font-size কমপক্ষে 13px রাখো।
+- সর্বোচ্চ ৫-৬টি মূল উপাদান/লেবেল রাখো, বেশি জটিল কোরো না।
+- রঙ: রেখা/টেক্সটের জন্য #2B2823, প্রধান অংশের জন্য #C96442, দ্বিতীয় রঙ হিসেবে #2F5D3E।
+- বাংলা লেবেল <text> ট্যাগে সঠিকভাবে লেখো।
+- সম্পূর্ণ, বৈধ SVG কোড দাও — কখনোই অসম্পূর্ণ বা ভাঙা কোড দিও না।
+
+যদি ডায়াগ্রাম সাহায্য না করে (যেমন সংজ্ঞা বা তারিখ জিজ্ঞাসা করা প্রশ্নে), তাহলে শুধু একটি শব্দ লেখো: NONE
+
+প্রাসঙ্গিক তথ্য:
+${context}
+
+প্রশ্ন: ${question}`;
+
+  const res = await fetch('https://ollama.com/api/chat', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${ollamaApiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: 'kimi-k2.6:cloud',
+      messages: [{ role: 'user', content: prompt }],
+      stream: false
+    })
+  });
+  const data: any = await res.json();
+  const content: string = data.message?.content || '';
+
+  if (content.trim() === 'NONE' || !content.includes('<svg')) return null;
+
+  const match = content.match(/```svg\s*([\s\S]*?)```/i) || content.match(/(<svg[\s\S]*<\/svg>)/i);
+  if (!match) return null;
+
+  const svg = match[1].trim();
+  // Basic sanity check — reject anything that doesn't look like real, complete SVG
+  if (!svg.startsWith('<svg') || !svg.includes('</svg>')) return null;
+
+  return svg;
 }
 
 export default {
@@ -126,9 +167,17 @@ export default {
       const topChunks = findTopChunks(queryEmbedding, 2);
       const context = topChunks.map((c: any) => c.text).join('\n\n');
 
-      const answer = await askModel(question, studentClass, context, env.OLLAMA_API_KEY);
+      // Run the text answer and the diagram decision in parallel — same total wait time as before.
+      const [answer, diagramSvg] = await Promise.all([
+        askModel(question, studentClass, context, env.OLLAMA_API_KEY),
+        askDiagramModel(question, context, env.OLLAMA_API_KEY)
+      ]);
 
-      return new Response(JSON.stringify({ answer }), {
+      const finalAnswer = diagramSvg
+        ? `${answer}\n\n\`\`\`svg\n${diagramSvg}\n\`\`\``
+        : answer;
+
+      return new Response(JSON.stringify({ answer: finalAnswer }), {
         headers: { 'Content-Type': 'application/json', ...corsHeaders }
       });
 

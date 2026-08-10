@@ -407,7 +407,8 @@
     background:var(--cream-2);
     border:0.5px solid var(--border);
     border-radius:10px;
-    display:flex;flex-direction:column;align-items:center;gap:10px;
+    display:inline-flex;flex-direction:column;align-items:flex-start;gap:10px;
+    max-width:100%;
   }
   .diagram-download{
     display:flex;align-items:center;gap:6px;
@@ -921,6 +922,15 @@ function sanitizeSvg(svg){
     .replace(/javascript:/gi, '');
 }
 
+// Rejects incomplete/malformed SVG so we never render an empty diagram box.
+function isValidSvg(svg){
+  const trimmed = svg.trim();
+  if(!trimmed.startsWith('<svg')) return false;
+  if(!trimmed.includes('</svg>')) return false;
+  if(trimmed.length < 40) return false;
+  return true;
+}
+
 function markdownToBlocks(markdown){
   const blocks = [];
 
@@ -928,8 +938,12 @@ function markdownToBlocks(markdown){
   // so we can slot a real diagram block into the right position below.
   const diagrams = [];
   const withoutSvg = markdown.replace(/```svg\s*([\s\S]*?)```/gi, (match, svgCode) => {
-    diagrams.push(sanitizeSvg(svgCode.trim()));
-    return `\n@@DIAGRAM_${diagrams.length - 1}@@\n`;
+    const clean = sanitizeSvg(svgCode.trim());
+    if(isValidSvg(clean)){
+      diagrams.push(clean);
+      return `\n@@DIAGRAM_${diagrams.length - 1}@@\n`;
+    }
+    return '\n'; // broken diagram — drop it silently, no empty box
   });
 
   const lines = withoutSvg.split('\n');
