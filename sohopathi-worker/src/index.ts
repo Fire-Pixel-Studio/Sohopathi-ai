@@ -134,6 +134,36 @@ ${context}
   return svg;
 }
 
+// For questions that include an uploaded image — reads the image and answers directly.
+async function askVisionModel(question: string, studentClass: string, imageBase64: string, ollamaApiKey: string) {
+  // Strip the "data:image/...;base64," prefix if present — Ollama wants raw base64.
+  const rawBase64 = imageBase64.includes(',') ? imageBase64.split(',')[1] : imageBase64;
+
+  const prompt = `তুমি "সহপাঠী AI" — বাংলাদেশের ${studentClass || 'ষষ্ঠ থেকে দশম শ্রেণির'} শিক্ষার্থীদের জন্য একজন সহায়ক শিক্ষক। শিক্ষার্থী একটি ছবি পাঠিয়েছে। ছবিটি ভালোভাবে দেখো এবং তার প্রশ্নের উত্তর দাও।
+
+উত্তর এই নিয়ম মেনে দাও:
+- বাংলায়, সহজ ভাষায়, সংক্ষেপে উত্তর দাও
+- ছবিতে যা দেখছ তার উপর ভিত্তি করে সরাসরি উত্তর দাও
+- অপ্রয়োজনীয় বিস্তারিত এড়িয়ে চলো
+
+প্রশ্ন: ${question}`;
+
+  const res = await fetch('https://ollama.com/api/chat', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${ollamaApiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: 'qwen3-vl:235b-cloud',
+      messages: [{ role: 'user', content: prompt, images: [rawBase64] }],
+      stream: false
+    })
+  });
+  const data: any = await res.json();
+  return data.message?.content || 'দুঃখিত, ছবিটি বুঝতে সমস্যা হয়েছে।';
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const corsHeaders = {
@@ -154,11 +184,19 @@ export default {
     }
 
     try {
-      const { question, studentClass } = await request.json() as { question: string; studentClass: string };
+      const { question, studentClass, image } = await request.json() as { question: string; studentClass: string; image?: string | null };
 
       if (!question || question.trim() === '') {
         return new Response(JSON.stringify({ error: 'প্রশ্ন খালি রাখা যাবে না' }), {
           status: 400,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders }
+        });
+      }
+
+      // If an image was attached, answer directly from the image — skip text retrieval.
+      if (image) {
+        const answer = await askVisionModel(question, studentClass, image, env.OLLAMA_API_KEY);
+        return new Response(JSON.stringify({ answer }), {
           headers: { 'Content-Type': 'application/json', ...corsHeaders }
         });
       }
